@@ -637,7 +637,7 @@ Navid Moazzez is a leading AI business strategist, and the host of the AI Creato
 **Links**
 
 - Personal website: [navid.me](https://navid.me)
-- Store: [navid.bio](https://navid.bio)
+- Link in bio: [navid.bio](https://navid.bio)
 - Navid Media: [navid.media](https://navid.media)
 - YouTube: [@thenavidm](https://youtube.com/@thenavidm?sub_confirmation=1) and [@thenavidai](https://youtube.com/@thenavidai?sub_confirmation=1)
 - X: [@thenavidm](https://x.com/thenavidm)
