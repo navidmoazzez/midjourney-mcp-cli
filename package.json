@@ -1,0 +1,72 @@
+{
+  "name": "@thenavidm/midjourney-mcp-cli",
+  "version": "0.1.0",
+  "description": "Midjourney MCP server and CLI for Claude Code and AI agents. 27 tools for generating images, following jobs to completion, downloading the real files, and building moodboards that make a style reusable.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "bin": {
+    "midjourney-mcp": "dist/index.js",
+    "midjourney-cli": "dist/index.js"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "start": "node dist/index.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run build",
+    "build:mcpb": "bash desktop-extension/build.sh"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.18.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.7.0",
+    "vitest": "^2.1.0"
+  },
+  "license": "MIT",
+  "author": "Navid Moazzez (https://navid.me)",
+  "homepage": "https://navid.me",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/navidmoazzez/midjourney-mcp-cli.git"
+  },
+  "bugs": {
+    "url": "https://github.com/navidmoazzez/midjourney-mcp-cli/issues"
+  },
+  "keywords": [
+    "ai-agents",
+    "anthropic",
+    "claude",
+    "claude-code",
+    "claude-desktop",
+    "cli",
+    "command-line-tool",
+    "cursor",
+    "image-generation",
+    "llm-tools",
+    "mcp",
+    "mcp-server",
+    "midjourney",
+    "midjourney-api",
+    "model-context-protocol",
+    "text-to-image",
+    "typescript",
+    "windsurf"
+  ],
+  "files": [
+    "dist",
+    "README.md",
+    "SKILL.md",
+    "LICENSE"
+  ],
+  "contributors": [
+    "Navid Moazzez (https://navid.me)"
+  ]
+}
