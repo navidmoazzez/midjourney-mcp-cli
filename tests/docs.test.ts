@@ -93,19 +93,24 @@ describe("SKILL.md", () => {
 });
 
 describe("version", () => {
-  it("is the same in package.json, the manifest and server.ts", () => {
+  it("is the same in package.json and the desktop manifest", () => {
     const pkg = JSON.parse(readFileSync(join(root, "package.json"), "utf8")) as { version: string };
     const manifest = JSON.parse(
       readFileSync(join(root, "desktop-extension", "manifest.json"), "utf8"),
     ) as { version: string };
-    const server = readFileSync(join(root, "src", "server.ts"), "utf8").match(
-      /VERSION = "([^"]+)"/,
-    )?.[1];
 
-    // Three places, bumped by hand, and a mismatch only shows up as a Desktop
-    // extension that reports the wrong version long after anyone would connect
-    // it to the release.
-    expect(new Set([pkg.version, manifest.version, server]).size).toBe(1);
+    // Two places bumped by hand. A mismatch only shows up as a Desktop
+    // extension reporting the wrong version, long after anyone would connect
+    // that to the release.
+    expect(manifest.version).toBe(pkg.version);
+  });
+
+  it("is read from package.json rather than written into the source", () => {
+    const server = readFileSync(join(root, "src", "server.ts"), "utf8");
+    // A hardcoded copy drifts on the next bump and the server then lies to
+    // every client it handshakes with.
+    expect(server).not.toMatch(/VERSION = "\d/);
+    expect(server).toContain("pkg.version");
   });
 
   it("says the same tool count in the manifest as ships", () => {

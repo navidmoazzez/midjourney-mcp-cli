@@ -1,5 +1,7 @@
 /** Assembles the MCP server: instructions, tools, and the read-only filter. */
 
+import { createRequire } from "node:module";
+
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
 import { MidjourneyClient } from "./api/client.js";
@@ -8,7 +10,21 @@ import { WriteGuard } from "./safety.js";
 import { ALL_TOOLS } from "./tools/index.js";
 import { makeContext, register } from "./tools/kit.js";
 
-export const VERSION = "0.1.0";
+/**
+ * Read from package.json rather than written here.
+ *
+ * A hardcoded copy drifts the moment a version is bumped, and the symptom is a
+ * server that reports the wrong version to every client it handshakes with,
+ * long after anyone would connect that to the release.
+ *
+ * `createRequire` rather than an import assertion: the resolution works the same
+ * from `dist/` and from a global install, and it needs no flag on any supported
+ * Node.
+ */
+const require = createRequire(import.meta.url);
+const pkg = require("../package.json") as { version: string };
+
+export const VERSION = pkg.version;
 
 /**
  * What the model is told before it sees a single tool.
