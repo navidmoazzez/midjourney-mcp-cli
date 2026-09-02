@@ -8,7 +8,7 @@
 [![YouTube](https://img.shields.io/badge/YouTube-@thenavidm-red?logo=youtube&logoColor=white)](https://youtube.com/@thenavidm?sub_confirmation=1)
 [![X](https://img.shields.io/badge/X-@thenavidm-black?logo=x)](https://x.com/thenavidm)
 
-Midjourney MCP server and CLI for Claude Code and AI agents. Generate images, follow jobs to completion, download the real files, and build moodboards that make a style reusable.
+Midjourney MCP server and CLI for Claude Code and AI agents. 27 tools for generating images, following jobs to completion, downloading the real files, and building moodboards that make a style reusable.
 
 Midjourney publishes no API, so this drives a real Chrome that is signed in as you.
 
