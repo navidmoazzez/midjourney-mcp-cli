@@ -1,6 +1,4 @@
-<div align="center">
-  <img src="https://cdn.navid.media/connectors/midjourney-icon.png" alt="Midjourney" width="88">
-</div>
+<img src="https://cdn.navid.media/connectors/midjourney-icon-solid.png" alt="Midjourney" width="88">
 
 # Midjourney MCP + CLI
 
@@ -18,18 +16,7 @@ There is no key to paste and no cookie to export. You sign in once, in a window,
 
 Built and maintained by [Navid Moazzez](https://navid.me).
 
-```
-You: make a moodboard for cold Nordic product shots, fill it, then shoot a jar of face cream in that style
-
-Claude: Built the board and used it.
-
-  moodboard  Nordic Skincare | Still Life        4 images
-  job        f44b0a9d-e184-4e18-811f-a1ef9482d286
-  prompt     a ceramic jar of face cream, lid beside it
-  style      from the moodboard, not the prompt
-
-  ~/Downloads/midjourney/f44b0a9d-0.png   1.8 MB   960x1200
-```
+<img src="https://cdn.navid.media/repos/midjourney-mcp-cli.gif?v=1" alt="Claude Code using the Midjourney MCP server" width="520">
 
 ## Two ways to use it
 
