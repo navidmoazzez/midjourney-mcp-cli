@@ -108,10 +108,21 @@ async function main(): Promise<void> {
 
   if (command === "capture") {
     const { runCapture } = await import("./capture.js");
-    const seconds = Number(
-      argv.find((token) => token.startsWith("--seconds="))?.slice("--seconds=".length) ?? 60,
-    );
-    const outPath = argv.find((token) => token.startsWith("--out="))?.slice("--out=".length);
+
+    // Accept `--flag value` as well as `--flag=value`. Only the `=` form worked
+    // here, while every tool command accepts both, so `--seconds 150 --out x`
+    // silently ran for the default 60s and wrote nothing. A flag that is
+    // ignored rather than refused is the worst kind.
+    const flag = (name: string): string | undefined => {
+      const withEquals = argv.find((token) => token.startsWith(`--${name}=`));
+      if (withEquals) return withEquals.slice(name.length + 3);
+      const index = argv.indexOf(`--${name}`);
+      const next = index === -1 ? undefined : argv[index + 1];
+      return next && !next.startsWith("--") ? next : undefined;
+    };
+
+    const seconds = Number(flag("seconds") ?? 60);
+    const outPath = flag("out");
     process.exitCode = await runCapture(loadConfig(), {
       seconds: Number.isFinite(seconds) ? Math.min(Math.max(seconds, 5), 1800) : 60,
       outPath,
