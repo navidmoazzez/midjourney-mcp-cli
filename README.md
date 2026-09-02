@@ -2,6 +2,7 @@
 
 # Midjourney MCP + CLI
 
+[![npm](https://img.shields.io/npm/v/@thenavidm/midjourney-mcp-cli?color=orange&label=npm)](https://www.npmjs.com/package/@thenavidm/midjourney-mcp-cli)
 [![Licence](https://img.shields.io/badge/licence-MIT-green)](./LICENSE)
 [![YouTube](https://img.shields.io/badge/YouTube-@thenavidm-red?logo=youtube&logoColor=white)](https://youtube.com/@thenavidm?sub_confirmation=1)
 [![X](https://img.shields.io/badge/X-@thenavidm-black?logo=x)](https://x.com/thenavidm)
@@ -16,7 +17,7 @@ There is no key to paste and no cookie to export. You sign in once, in a window,
 
 Built and maintained by [Navid Moazzez](https://navid.me).
 
-<img src="https://cdn.navid.media/repos/midjourney-mcp-cli.gif?v=1" alt="Claude Code using the Midjourney MCP server" width="520">
+<img src="https://cdn.navid.media/repos/midjourney-mcp-cli.gif?v=2" alt="Claude Code using the Midjourney MCP server" width="520">
 
 ## Two ways to use it
 
@@ -118,8 +119,8 @@ All 27 with their arguments are in [section 6](#6-tools).
 | 11 | [Your data](#11-your-data) | What is stored and where |
 | 12 | [Risks](#12-risks) | Read this before you install |
 | 13 | [Troubleshooting](#13-troubleshooting) | When something breaks |
-| | [Environment variables](#environment-variables) | Every knob, and its default |
-| 14 | [FAQ](#14-faq) | Including what an MCP server is |
+| 14 | [Environment variables](#14-environment-variables) | Every knob, and its default |
+| 15 | [FAQ](#15-faq) | Including what an MCP server is |
 
 ## 1. What you can ask it
 
@@ -167,8 +168,6 @@ Node 22 or newer, and Google Chrome. Nothing else.
 
     npx -y @thenavidm/midjourney-mcp-cli --version
 
-> [!NOTE]
-> Not published to npm yet. Until it is, clone the repo and run `npm install && npm run build`, then use `node dist/index.js` wherever this page says `npx -y @thenavidm/midjourney-mcp-cli@latest`.
 
 Node 22 is the floor because the browser connection uses the global `WebSocket`
 that landed in that release. That is also why it has no dependency doing it.
@@ -511,7 +510,7 @@ Start with `doctor`. It orders the checks so the first failure is the one to fix
 | Every command times out at once | A native dialog was left open in the window. Dialogs are auto-dismissed now; if it persists, close the tab |
 | Downloads are empty or fail | The asset URL expired. Re-read the job with `get_job` for fresh URLs |
 
-## Environment variables
+## 14. Environment variables
 
 Every one of these is optional. The defaults are what you want unless you are doing something unusual.
 
@@ -540,7 +539,7 @@ Every one of these is optional. The defaults are what you want unless you are do
 | `MIDJOURNEY_HTTP_HOST` | `127.0.0.1` | Interface for `--http` |
 | `MIDJOURNEY_HTTP_TOKEN` | unset | Bearer token. Required to listen off loopback |
 
-## 14. FAQ
+## 15. FAQ
 
 <details>
 <summary><b>What is an MCP server?</b></summary>
