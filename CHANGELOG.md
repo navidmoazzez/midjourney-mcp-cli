@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.2.0
+
+- `moodboard` now applies a board the way the web app does, as a personalization code, rather than sampling its images into `--sref`. The code is the board id with an `m` prefix, which is neither documented nor guessable; the sref approximation only registered at a high `--sw`, and that weight was what made output look over-processed.
+- Default model is v8.2, the current one. It was a version behind.
+- `stylize`, `chaos`, `weird` and `style_weight` are no longer encouraged by their own descriptions. Midjourney's defaults sit near the minimum and raising them costs fidelity.
+- SKILL.md carries the craft: what to specify in a prompt so the model is not left inventing it, which of the four styling tools fits which job, and the explore-to-finish pipeline through vary, remix, zoom, upscale and animate.
+
 ## 1.1.0
 
 Five job types, read out of the web app's compiled bundle rather than guessed or clicked.

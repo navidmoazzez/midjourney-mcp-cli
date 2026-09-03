@@ -419,29 +419,42 @@ At the terminal, Midjourney's own spellings work as aliases: `--ar`, `--sref`,
 
 ## 9. Moodboards
 
-A moodboard is a curated pile of reference images. Naming one is far more
-reliable than describing a look in words, because the board *is* the look.
+A moodboard is a set of images the account has curated. Applying one is the same
+mechanism the web app's Personalize panel uses: the board becomes a
+personalization code on the prompt, resolved for you from its name.
+
+```bash
+midjourney-cli imagine "a ceramic jar of face cream" --moodboard "Nordic Skincare" --confirm
+```
+
+That is worth stating because there is a plausible wrong way to do the same
+thing: sampling the board's images into `--sref` URLs. It only registers at a
+high `--sw`, and that weight is what makes output look over-processed. The
+personalization code needs no weight and does not compete with your wording.
 
 The loop:
 
 ```bash
-midjourney-cli create-moodboard "Nordic Skincare | Still Life"
+midjourney-cli create-moodboard "Nordic Skincare"
 midjourney-cli imagine "<a long, specific style description>" --confirm
 midjourney-cli add-to-moodboard "Nordic Skincare" --job-id <job>
-midjourney-cli imagine "a ceramic jar of face cream, lid beside it" \
-  --moodboard "Nordic Skincare" --sw 400 --confirm
+midjourney-cli imagine "a ceramic jar of face cream" --moodboard "Nordic Skincare" --confirm
 ```
-
-After the third line the style is a name, and a nine-word prompt reproduces it.
 
 Partial names work: `"High Fashion"` finds `"High Fashion | Woman"`. An ambiguous
 name errors with the candidates rather than guessing, because picking the wrong
-board costs a generation to discover. References are sampled across the board
-rather than taken from the front, so a 242-image board does not always draw on
-its oldest images.
+board costs a generation to discover.
 
-`profile` does something different: it biases toward images the account has
-rated, rather than toward a set of pictures.
+`--p` accepts several codes, so a moodboard and a personalization profile apply
+together. `profile` is the other kind of personalization: it biases toward
+images the account has rated, rather than toward a set of pictures.
+
+### Leave the sliders alone
+
+Midjourney's own defaults for stylize, weirdness and variety sit near the
+minimum. Raising `stylize` trades fidelity for a prettier, more generic image.
+Set them when you want that; otherwise a strong result comes from the prompt and
+the reference.
 
 ## 10. How it works
 

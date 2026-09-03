@@ -93,7 +93,7 @@ export function loadConfig(): Config {
 
     downloadDir: str("MIDJOURNEY_DOWNLOAD_DIR") ?? join(homedir(), "Downloads", "midjourney"),
     defaultSpeed: speed("MIDJOURNEY_DEFAULT_SPEED", "fast"),
-    defaultVersion: str("MIDJOURNEY_DEFAULT_VERSION") ?? "8.1",
+    defaultVersion: str("MIDJOURNEY_DEFAULT_VERSION") ?? "8.2",
 
     refreshView: bool("MIDJOURNEY_REFRESH_VIEW", true),
 

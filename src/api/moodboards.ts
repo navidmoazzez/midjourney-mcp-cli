@@ -157,6 +157,22 @@ export function pickReferences(board: Moodboard, count: number): string[] {
   return Array.from({ length: wanted }, (_, index) => urls[Math.floor(index * step)] as string);
 }
 
+/**
+ * The personalization code for a moodboard.
+ *
+ * It is the board's id with an `m` in front, which is not documented anywhere
+ * and not guessable: `--p 7371990647814750211` is refused as an invalid code,
+ * `--p m7371990647814750211` is accepted. Read out of what the web app's "Use
+ * in Prompt" button writes into the prompt box.
+ *
+ * This is how the app actually applies a moodboard. Sampling its images into
+ * `--sref` instead is an approximation that needs a high `--sw` to show up at
+ * all, and that weight is what makes output look over-processed.
+ */
+export function personalizationCodeFor(board: Pick<Moodboard, "id">): string {
+  return board.id.startsWith("m") ? board.id : `m${board.id}`;
+}
+
 /** Resolve "use my High Fashion moodboard" to the style references it means. */
 export async function referencesFromMoodboard(
   client: MidjourneyClient,

@@ -1,6 +1,6 @@
 {
   "name": "@thenavidm/midjourney-mcp-cli",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Midjourney MCP server and CLI for Claude Code and AI agents. 32 tools for generating images, following jobs to completion, downloading the real files, and building moodboards that make a style reusable.",
   "type": "module",
   "main": "./dist/index.js",

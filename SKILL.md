@@ -68,10 +68,10 @@ The ones worth knowing:
 | Argument | What it does |
 |---|---|
 | `aspect` | `"16:9"`, `"3:2"`, `"1:1"` |
-| `stylize` | 0-1000. Low follows the prompt, high looks prettier and drifts |
-| `chaos` | 0-100. How different the four results are from each other |
+| `stylize` | 0-1000. Leave unset: the default is low and raising it costs fidelity |
+| `chaos` | 0-100. Leave unset unless exploring |
 | `seed` | Reuse with an identical prompt to iterate on one image, not roll a new one |
-| `style_refs` | Style references: an image URL, a numeric code, or `"random"` |
+| `style_refs` | One specific reference. For a curated look use `moodboard` instead |
 | `omni_refs` | Carry a character or object across images. The v7 replacement for `--cref` |
 | `image_prompts` | Direct image URLs, used as visual input |
 | `negative` | Things to keep out, e.g. `"text, watermark"` |
@@ -82,52 +82,117 @@ The ones worth knowing:
 At the terminal, Midjourney's own spellings work as aliases: `--ar`, `--sref`,
 `--oref`, `--iw`, `--sw`, `--ow`, `--q`, `--no`, `--v`.
 
-## Moodboards are the best styling tool here
+## Use the newest model unless told otherwise
 
-The account has curated boards of reference images. Naming one is far more
-reliable than describing a look in words, because the board *is* the look.
+The default is the current model, v8.2. Only pin an older one when the user asks
+for it, or when they are iterating on an image made with it and want the match.
 
-```
-imagine(prompt: "a model in an ivory suit on a coastal cliff",
-        moodboard: "High Fashion", moodboard_refs: 4, confirm: true)
-```
+## Moodboards are the strongest styling tool, and they are not srefs
 
-Partial names work. An ambiguous name errors with the candidates rather than
-guessing, because picking the wrong board costs a generation to find out.
+A moodboard is a collection of images the account has curated. Applying one is
+the same mechanism as selecting it in the web app's Personalize panel: the board
+becomes a **personalization code** on the prompt.
 
-`list_moodboards` shows them with image counts. A board showing 0 images is
-empty and cannot be referenced yet. `get_moodboard` shows exactly which
-references a generation would use.
-
-`profile` does something different: it biases toward images the account has
-rated, rather than toward a set of pictures. `list_personalized_profiles`
-reports how many ratings each is built on, and one with a low count barely
-moves the result.
-
-## Building a moodboard, which is the real workflow
-
-Generate a style, keep what works, reuse it. That loop is what the boards are
-for, and it is worth driving deliberately.
-
-```
-create_moodboard(title: "Nordic Skincare | Still Life")
-imagine(prompt: "<a long, specific style description>", confirm: true)
-add_to_moodboard(moodboard: "Nordic Skincare", job_id: "<the job>", confirm: true)
+```bash
+midjourney-cli imagine "a ceramic jar of face cream" --moodboard "Nordic Skincare" --confirm
 ```
 
-After that the style is a name. A nine-word prompt reproduces it:
+The code is the board's id with an `m` in front, and the tool resolves it for
+you. This matters because there is an obvious wrong way to do the same thing:
+sampling the board's images into `--sref` URLs. That approximation only shows up
+at a high `--sw`, and that weight is what makes output look processed. Use the
+moodboard.
 
+`--p` accepts more than one code, so a moodboard and a personalization profile
+can apply together.
+
+Three styling tools, three jobs:
+
+| Want | Use |
+|---|---|
+| A look the account has curated | `moodboard` |
+| One specific reference image or code | `style_refs` |
+| The same character or object across images | `omni_refs` |
+| The account's learned taste | `profile` |
+
+## Leave stylize, chaos and weird alone
+
+Midjourney's own defaults sit low, and the sliders in its settings panel start
+near the minimum. Raising `stylize` trades fidelity for a prettier, more
+generic image; `chaos` and `weird` are for exploring, not for quality.
+
+Reach for them only when the user asks for more stylisation or more variety. A
+strong result comes from the prompt and the reference, not from the knobs.
+
+## Write prompts that leave nothing to chance
+
+Vague adjectives produce generic images. Specificity is what earns the output.
+Compare:
+
+> a beautiful woman in a knit set, studio, high quality, 8k
+
+against
+
+> a woman in three-quarter turn against a seamless clay cyclorama, rib-knit set
+> in oat, one hand at the hip, chin level, lit by a single large softbox high
+> and slightly left with a white bounce filling the shadow side so the falloff
+> is gentle, shot on medium format at f5.6, skin unretouched with visible pores,
+> nothing else in frame
+
+The second names the pose, the light source and its position, the fill, how the
+falloff should behave, the camera and aperture, what the skin keeps, and what
+must not appear. Every one of those is a decision the model would otherwise make
+for you.
+
+Things worth stating explicitly, because the model will invent them otherwise:
+
+- **Where the light comes from**, and what fills the shadow
+- **What the camera is**, and the aperture, which sets how much falls off
+- **What the subject is doing** with hands, shoulders, gaze
+- **What must not be in frame**, via the prompt or `negative`
+- **The palette**, named as colours rather than a mood
+- **Skin, fabric and surface texture**, or you get plastic
+
+`raw` is worth setting for anything photographic: it applies less of
+Midjourney's automatic prettification.
+
+## The pipeline is where the good work happens
+
+One generation is a draft. The tools exist to take it somewhere:
+
+```bash
+# 1. Explore cheaply. Draft mode is fast and costs less.
+midjourney-cli imagine "<a long, specific prompt>" --draft --confirm
+
+# 2. Once the composition is right, run it properly and keep the seed.
+midjourney-cli imagine "<the same prompt>" --seed 501058481 --raw --confirm
+
+# 3. Push the one that is closest.
+midjourney-cli vary-image <job> --index 2 --confirm          # subtle, or --strong
+midjourney-cli remix-image <job> --index 2 --prompt "<reworded>" --confirm
+
+# 4. Give it room, or take the frame wider.
+midjourney-cli zoom-out <job> --index 2 --zoom-factor 150 --confirm
+midjourney-cli pan-image <job> --index 2 --direction left --confirm
+
+# 5. Finish it.
+midjourney-cli upscale-image <job> --index 2 --confirm       # subtle, or creative
+midjourney-cli animate-image <job> --index 2 --motion "slow push in" --confirm
+midjourney-cli download-job <job> --out-dir ./renders
 ```
-imagine(prompt: "a ceramic jar of face cream, lid beside it",
-        moodboard: "Nordic Skincare", moodboard_refs: 4, confirm: true)
-```
 
-Push `style_weight` up (300-500) when the look should dominate the prompt, and
-down when the subject matters more than the styling.
+`seed` is how you iterate rather than reroll: the same prompt and seed gives a
+near-identical image, so a small wording change shows its own effect instead of
+a new roll of the dice.
 
-`add_to_moodboard` takes a whole job at once, or specific `indexes`, or bare
-`urls`. `remove_from_moodboard` is how a board stays sharp, and it cannot be
-undone, so it asks for confirmation.
+`zoom_out` before adding a headline or a logo: it gives the composition room
+without regenerating it.
+
+`upscale` subtle keeps what is there; creative reworks detail as it enlarges, so
+it is the wrong choice when the image is already right.
+
+`animate_image` takes a `motion` note, not a scene: it is appended to the
+image's own prompt, because Midjourney reads that field as what is in the frame.
 
 ## Working with results
 

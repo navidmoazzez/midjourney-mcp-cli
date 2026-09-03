@@ -11,7 +11,7 @@
 import { z } from "zod";
 
 import { downloadJob } from "../api/download.js";
-import { referencesFromMoodboard } from "../api/moodboards.js";
+import { listMoodboards, matchMoodboard, personalizationCodeFor } from "../api/moodboards.js";
 import {
   submitImagine,
   submitPan,
@@ -68,7 +68,7 @@ const promptShape = {
     .number()
     .optional()
     .describe(
-      "0-1000. How strongly Midjourney applies its own aesthetic. Low follows the prompt literally, high makes prettier but less faithful images. Default is 100. Sent as --stylize.",
+      "0-1000, and best left alone. Midjourney's own default sits low, and raising it trades fidelity for a processed look, so only set it when the user asks for more stylisation. Sent as --stylize.",
     ),
   chaos: z
     .number()
@@ -97,16 +97,7 @@ const promptShape = {
     .string()
     .optional()
     .describe(
-      "Use one of the account's moodboards as the style, by name or id. Partial names work: 'High Fashion' finds 'High Fashion | Woman'. Its images are sent as style references, so this is the shorthand for building a look you have already curated. Call list_moodboards to see them.",
-    ),
-  moodboard_refs: z
-    .number()
-    .int()
-    .min(1)
-    .max(10)
-    .optional()
-    .describe(
-      "How many images to take from the moodboard, 1-10. Defaults to 4. They are spread across the board rather than taken from the front, so a large board does not always draw on its oldest images.",
+      "Apply one of the account's moodboards, by name or id. Partial names work: 'High Fashion' finds 'High Fashion | Woman'.\n\nThis is the same mechanism as selecting it in the web app's Personalize panel: the board becomes a personalization code on the prompt. It needs no style weight and does not compete with your wording, so prefer it over style_refs for any look the account has already curated. Call list_moodboards to see them.",
     ),
   style_refs: z
     .array(z.string())
@@ -117,7 +108,9 @@ const promptShape = {
   style_weight: z
     .number()
     .optional()
-    .describe("0-1000. How strongly the style references apply. Sent as --sw."),
+    .describe(
+      "0-1000. How strongly style references apply. Leave unset unless the references are being ignored: a high value overwhelms the prompt and reads as over-processed.",
+    ),
   omni_refs: z
     .array(z.string())
     .optional()
@@ -182,24 +175,26 @@ function paramsFrom(args: Record<string, unknown>): PromptParams {
 }
 
 /**
- * Fold a named moodboard into the style references.
+ * Apply a named moodboard the way the web app does.
  *
- * Appended rather than replacing anything the caller passed explicitly: asking
- * for a moodboard and a specific `--sref` means both, and silently dropping one
- * of them would be the kind of surprise that costs a generation to notice.
+ * As a personalization code, not a pile of `--sref` URLs. The code route is
+ * what the Personalize panel uses, it needs no style weight, and it does not
+ * fight the prompt: the sref approximation only showed up at high `--sw`, which
+ * is exactly what made earlier output look processed.
  */
 async function applyMoodboard(
   params: PromptParams,
   args: Record<string, unknown>,
   ctx: { client: import("../api/client.js").MidjourneyClient },
-): Promise<{ title: string; id: string; references: number } | undefined> {
+): Promise<{ title: string; id: string; code: string } | undefined> {
   const query = args.moodboard as string | undefined;
   if (!query) return undefined;
 
-  const count = (args.moodboard_refs as number | undefined) ?? 4;
-  const { board, refs } = await referencesFromMoodboard(ctx.client, query, count);
-  params.styleRefs = [...(params.styleRefs ?? []), ...refs];
-  return { title: board.title, id: board.id, references: refs.length };
+  const board = matchMoodboard(await listMoodboards(ctx.client), query);
+  const code = personalizationCodeFor(board);
+  // `--p` takes several codes, so a caller-supplied profile is kept alongside.
+  params.profile = params.profile ? `${params.profile} ${code}` : code;
+  return { title: board.title, id: board.id, code };
 }
 
 export const createTools = [
