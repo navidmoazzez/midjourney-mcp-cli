@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.1.0
+
+Five job types, read out of the web app's compiled bundle rather than guessed or clicked.
+
+- `upscale_image`, `animate_image` (image to video), `pan_image`, `zoom_out` and `remix_image`.
+- The upscaler name is version-specific and not what the menu says: a v8.1 image wants `v8r1_2x_subtle`, not `subtle`. It is derived from the job's own model version now.
+- Video nests its source under `parentJob` as `image_num`, not the flat `index` every other type uses, and `newPrompt` carries the image's prompt rather than the motion. A motion note is appended to the original instead of replacing it.
+- Video files live under `/video/<job>/<n>.mp4`, so deriving image names for a video job produced four URLs that all 404. `download_job` handles both.
+- Filenames no longer repeat the index: `<job>-0.mp4`, not `<job>-0-0.mp4`.
+
 ## 1.0.0
 
 First release.

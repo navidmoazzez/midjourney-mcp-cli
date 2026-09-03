@@ -240,6 +240,186 @@ export async function submitRaw(
   return { jobIds: extractJobIds(raw), raw };
 }
 
+
+/**
+ * The rest of the job types, read out of the web app's own bundle.
+ *
+ * Every shape below was extracted from the compiled client rather than guessed
+ * or clicked, so the field names are the app's own. That matters: `upscale`
+ * takes a `type`, `video` nests its source under `parentJob` with `image_num`
+ * rather than `index`, and `pan` carries a `fraction` and a `stitch` flag. None
+ * of that is inferable, and a wrong guess spends GPU time on a request that
+ * quietly does nothing.
+ */
+
+function baseBody(userId: string, options: SubmitOptions): Record<string, unknown> {
+  return {
+    f: { mode: options.speed ?? "fast", private: options.private ?? false },
+    channelId: channelIdFor(userId),
+    metadata: {
+      isMobile: null,
+      imagePrompts: null,
+      imageReferences: null,
+      characterReferences: null,
+      depthReferences: null,
+      lightboxOpen: null,
+    },
+  };
+}
+
+async function submitShape(
+  client: MidjourneyClient,
+  shape: Record<string, unknown>,
+  options: SubmitOptions,
+): Promise<{ jobIds: string[]; raw: unknown }> {
+  const userId = await client.userId();
+  const body = { ...baseBody(userId, { speed: options.speed ?? client.config.defaultSpeed, ...options }), ...shape };
+  const raw = await client.request<unknown>(ENDPOINTS.submit, { method: "POST", body, noRetry: true });
+  refreshView(client, options.refresh !== false);
+  return { jobIds: extractJobIds(raw), raw };
+}
+
+/**
+ * Which upscaler a job can use, derived from the model that made it.
+ *
+ * The menu says "Subtle" and "Creative", but the wire wants a version-specific
+ * name: `v8r1_2x_subtle` for a v8.1 image, `v7_2x_creative` for a v7 one. Send
+ * the label and the request is refused. None of this is guessable, and it is
+ * why the first four attempts here were 400s.
+ */
+export function upscalerFor(version: string | undefined, style: "subtle" | "creative"): string {
+  const v = (version ?? "8.1").toLowerCase().replace(/^v/, "").trim();
+  if (v.startsWith("8.2")) return `v8r2_2x_${style}`;
+  if (v.startsWith("8")) return `v8r1_2x_${style}`;
+  if (v.startsWith("niji 7") || v.startsWith("7")) return `v7_2x_${style}`;
+  if (v.startsWith("6.1") || v.startsWith("niji 6")) return `v6r1_2x_${style}`;
+  if (v.startsWith("6")) return `v6_2x_${style}`;
+  // Older lines only ever had the fixed upscalers, with no subtle or creative.
+  return `v5_2x`;
+}
+
+/** The model version a job was made with, read off the job itself. */
+export function versionOfJob(job: { jobType?: string; prompt?: string } | undefined): string | undefined {
+  const fromType = job?.jobType?.match(/^v(\d+)-(\d+)_/);
+  if (fromType) return `${fromType[1]}.${fromType[2]}`;
+  const fromPrompt = job?.prompt?.match(/--v\s+(\S+)/);
+  if (fromPrompt) return fromPrompt[1];
+  const niji = job?.prompt?.match(/--niji\s+(\S+)/);
+  if (niji) return `niji ${niji[1]}`;
+  return undefined;
+}
+
+/** Upscale one image from a grid. `subtle` keeps it; `creative` reworks detail. */
+export async function submitUpscale(
+  client: MidjourneyClient,
+  jobId: string,
+  index: number,
+  style: "subtle" | "creative",
+  options: SubmitOptions & { version?: string } = {},
+) {
+  const version = options.version ?? versionOfJob(await findJob(client, jobId));
+  return submitShape(
+    client,
+    { t: "upscale", type: upscalerFor(version, style), id: jobId.trim(), index },
+    options,
+  );
+}
+
+/**
+ * Animate one image into a video.
+ *
+ * Two things here are not guessable and both cost a rejected request to learn.
+ * The source is nested under `parentJob` as `image_num`, not the flat `index`
+ * every other job type uses. And `newPrompt` carries the image's own prompt,
+ * not a description of the motion: passing "slow push in" on its own is
+ * refused, because the field is the scene, not the movement.
+ *
+ * So a motion note is appended to the original prompt rather than replacing
+ * it, which is what the web app does when you type into its box.
+ */
+export async function submitVideo(
+  client: MidjourneyClient,
+  jobId: string,
+  index: number,
+  opts: SubmitOptions & { motion?: string; resolution?: "480" | "720"; mode?: "auto" | "manual" } = {},
+) {
+  const source = await findJob(client, jobId);
+  const original = (source?.prompt ?? "").trim();
+  const motion = opts.motion?.trim();
+  const newPrompt = motion ? `${original} ${motion}`.trim() : original;
+
+  return submitShape(
+    client,
+    {
+      t: "video",
+      videoType: `vid_1.1_i2v_${opts.resolution ?? "480"}`,
+      stitch: null,
+      newPrompt,
+      parentJob: { job_id: jobId.trim(), image_num: index },
+      animateMode: opts.mode ?? (motion ? "manual" : "auto"),
+    },
+    opts,
+  );
+}
+
+/** Extend the frame in one direction. */
+export function submitPan(
+  client: MidjourneyClient,
+  jobId: string,
+  index: number,
+  direction: "left" | "right" | "up" | "down",
+  opts: SubmitOptions & { prompt?: string; fraction?: number } = {},
+) {
+  return submitShape(
+    client,
+    {
+      t: "pan",
+      newPrompt: opts.prompt ?? "",
+      direction,
+      fraction: opts.fraction ?? 0.5,
+      stitch: true,
+      id: jobId.trim(),
+      index,
+    },
+    opts,
+  );
+}
+
+/** Zoom out, filling the new space. 100 is no change; 200 doubles the frame. */
+export function submitZoomOut(
+  client: MidjourneyClient,
+  jobId: string,
+  index: number,
+  opts: SubmitOptions & { prompt?: string; zoomFactor?: number } = {},
+) {
+  return submitShape(
+    client,
+    {
+      t: "outpaint",
+      newPrompt: opts.prompt ?? "",
+      zoomFactor: opts.zoomFactor ?? 200,
+      id: jobId.trim(),
+      index,
+    },
+    opts,
+  );
+}
+
+/** Re-render one image against a new prompt, keeping its composition. */
+export function submitRemix(
+  client: MidjourneyClient,
+  jobId: string,
+  index: number,
+  prompt: string,
+  opts: SubmitOptions & { strong?: boolean } = {},
+) {
+  return submitShape(
+    client,
+    { t: "remix", strong: opts.strong ?? false, newPrompt: prompt, id: jobId.trim(), index },
+    opts,
+  );
+}
+
 export type ListOptions = { limit?: number; cursor?: string; userId?: string };
 
 /** Recent jobs for the signed-in account. */

@@ -2,8 +2,8 @@
   "manifest_version": "0.2",
   "name": "midjourney",
   "display_name": "Midjourney",
-  "version": "1.0.0",
-  "description": "Midjourney MCP server for Claude Code and AI agents. 27 tools for generating images, following jobs to completion, downloading the real files, and browsing your library and the explore feeds.",
+  "version": "1.1.0",
+  "description": "Midjourney MCP server for Claude Code and AI agents. 32 tools for generating images, following jobs to completion, downloading the real files, and browsing your library and the explore feeds.",
   "long_description": "Connects Claude to Midjourney.\n\nMidjourney publishes no API, so this drives a real Chrome signed in as you, in a browser profile of its own. There is no key to paste and no cookie to export: you sign in once, in a window, and the session persists.\n\nGenerating costs GPU time from a paid plan and cannot be refunded, so every tool that spends refuses to run without an explicit confirmation. Read Only hides them entirely.\n\nMidjourney's terms do not permit automated access, so this carries a risk to the account, as any unofficial client does.",
   "author": {
     "name": "Navid Moazzez",

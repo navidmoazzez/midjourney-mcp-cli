@@ -12,7 +12,18 @@ import { z } from "zod";
 
 import { downloadJob } from "../api/download.js";
 import { referencesFromMoodboard } from "../api/moodboards.js";
-import { submitImagine, submitRaw, submitRerun, submitVary, waitForJob } from "../api/jobs.js";
+import {
+  submitImagine,
+  submitPan,
+  submitRaw,
+  submitRemix,
+  submitRerun,
+  submitUpscale,
+  submitVary,
+  submitVideo,
+  submitZoomOut,
+  waitForJob,
+} from "../api/jobs.js";
 import { ValidationError } from "../api/errors.js";
 import { buildPrompt, type PromptParams } from "../content/prompt.js";
 import { summariseJob } from "../format/jobs.js";
@@ -400,6 +411,157 @@ export const createTools = [
         strong: args.strong ?? false,
         ...summariseJob(await waitForJob(ctx.client, jobId)),
       };
+    },
+  }),
+
+  defineTool({
+    name: "upscale_image",
+    title: "Upscale one image",
+    description:
+      "Upscale one image from a finished grid to full resolution.\n\n'subtle' enlarges what is there and keeps it faithful. 'creative' reinterprets detail as it enlarges, which adds texture and can change small things, so it is the wrong choice when the image is already right.\n\nIndex is zero-based: 0 top-left, 1 top-right, 2 bottom-left, 3 bottom-right. Costs GPU time.",
+    schema: {
+      job_id: z.string().describe("The finished job holding the image."),
+      index: z.number().int().min(0).max(3).describe("Which image, zero-based."),
+      type: z.enum(["subtle", "creative"]).optional().describe("Defaults to subtle."),
+      speed: speedArg,
+      wait: z.boolean().optional().describe("Block until it finishes. Defaults to true."),
+      ...confirmArg,
+    },
+    risk: "spend",
+    summary: (args) => `${args.type ?? "subtle"} upscale of image ${String(args.index)} from ${String(args.job_id)}`,
+    handler: async (args, ctx) => {
+      const submitted = await submitUpscale(ctx.client, args.job_id, args.index, args.type ?? "subtle", {
+        speed: args.speed,
+        refresh: args.wait === false,
+      });
+      const jobId = submitted.jobIds[0];
+      if (!jobId || args.wait === false) return { source_job_id: args.job_id, job_ids: submitted.jobIds };
+      return { source_job_id: args.job_id, ...summariseJob(await waitForJob(ctx.client, jobId)) };
+    },
+  }),
+
+  defineTool({
+    name: "animate_image",
+    title: "Turn an image into a video",
+    description:
+      "Animate one image from a finished grid into a short video.\n\nLeave the prompt out and Midjourney decides the motion. Give it one and it follows that instead, which is how you get a specific camera move rather than whatever the model felt like.\n\nVideo takes longer than a still, so expect to wait. 480p is quicker and cheaper than 720p. Costs GPU time.",
+    schema: {
+      job_id: z.string().describe("The finished job holding the image."),
+      index: z.number().int().min(0).max(3).describe("Which image, zero-based."),
+      motion: z
+        .string()
+        .optional()
+        .describe(
+          "How it should move, for example 'slow push in, hair drifting'. This is appended to the image's own prompt, because Midjourney reads that field as the scene rather than the movement. Omit to let it choose.",
+        ),
+      resolution: z.enum(["480", "720"]).optional().describe("Defaults to 480."),
+      speed: speedArg,
+      wait: z.boolean().optional().describe("Block until it finishes. Defaults to true."),
+      timeout_ms: z.number().optional().describe("How long to wait. Video is slower than a still."),
+      ...confirmArg,
+    },
+    risk: "spend",
+    summary: (args) => `animate image ${String(args.index)} from job ${String(args.job_id)}`,
+    handler: async (args, ctx) => {
+      const submitted = await submitVideo(ctx.client, args.job_id, args.index, {
+        motion: args.motion,
+        resolution: args.resolution,
+        speed: args.speed,
+        refresh: args.wait === false,
+      });
+      const jobId = submitted.jobIds[0];
+      if (!jobId || args.wait === false) return { source_job_id: args.job_id, job_ids: submitted.jobIds };
+      return {
+        source_job_id: args.job_id,
+        ...summariseJob(await waitForJob(ctx.client, jobId, { timeoutMs: args.timeout_ms ?? 900_000 })),
+      };
+    },
+  }),
+
+  defineTool({
+    name: "pan_image",
+    title: "Extend the frame sideways",
+    description:
+      "Extend one image in a direction, inventing what lies beyond the current frame. Good for turning a portrait crop into a wide shot without regenerating it. Costs GPU time.",
+    schema: {
+      job_id: z.string().describe("The finished job holding the image."),
+      index: z.number().int().min(0).max(3).describe("Which image, zero-based."),
+      direction: z.enum(["left", "right", "up", "down"]).describe("Which way to extend."),
+      prompt: z.string().optional().describe("What should appear in the new space."),
+      fraction: z.number().min(0.1).max(1).optional().describe("How far to extend, 0.1-1. Defaults to 0.5."),
+      speed: speedArg,
+      wait: z.boolean().optional().describe("Block until it finishes. Defaults to true."),
+      ...confirmArg,
+    },
+    risk: "spend",
+    summary: (args) => `pan ${String(args.direction)} from job ${String(args.job_id)}`,
+    handler: async (args, ctx) => {
+      const submitted = await submitPan(ctx.client, args.job_id, args.index, args.direction, {
+        prompt: args.prompt,
+        fraction: args.fraction,
+        speed: args.speed,
+        refresh: args.wait === false,
+      });
+      const jobId = submitted.jobIds[0];
+      if (!jobId || args.wait === false) return { source_job_id: args.job_id, job_ids: submitted.jobIds };
+      return { source_job_id: args.job_id, ...summariseJob(await waitForJob(ctx.client, jobId)) };
+    },
+  }),
+
+  defineTool({
+    name: "zoom_out",
+    title: "Zoom out from an image",
+    description:
+      "Pull the camera back, filling the new space around the existing image. 200 doubles the frame, 150 is gentler. Useful for giving a tight shot room for a headline or a logo. Costs GPU time.",
+    schema: {
+      job_id: z.string().describe("The finished job holding the image."),
+      index: z.number().int().min(0).max(3).describe("Which image, zero-based."),
+      zoom_factor: z.number().min(100).max(400).optional().describe("100 is no change. Defaults to 200."),
+      prompt: z.string().optional().describe("What should appear in the new space."),
+      speed: speedArg,
+      wait: z.boolean().optional().describe("Block until it finishes. Defaults to true."),
+      ...confirmArg,
+    },
+    risk: "spend",
+    summary: (args) => `zoom out from job ${String(args.job_id)}`,
+    handler: async (args, ctx) => {
+      const submitted = await submitZoomOut(ctx.client, args.job_id, args.index, {
+        prompt: args.prompt,
+        zoomFactor: args.zoom_factor,
+        speed: args.speed,
+        refresh: args.wait === false,
+      });
+      const jobId = submitted.jobIds[0];
+      if (!jobId || args.wait === false) return { source_job_id: args.job_id, job_ids: submitted.jobIds };
+      return { source_job_id: args.job_id, ...summariseJob(await waitForJob(ctx.client, jobId)) };
+    },
+  }),
+
+  defineTool({
+    name: "remix_image",
+    title: "Re-render an image against a new prompt",
+    description:
+      "Keep an image's composition and re-render it against different wording. This is how you change the subject or the styling of something you already like, rather than rolling a new grid and hoping. Costs GPU time.",
+    schema: {
+      job_id: z.string().describe("The finished job holding the image."),
+      index: z.number().int().min(0).max(3).describe("Which image, zero-based."),
+      prompt: z.string().describe("The new prompt."),
+      strong: z.boolean().optional().describe("Depart further from the original. Defaults to subtle."),
+      speed: speedArg,
+      wait: z.boolean().optional().describe("Block until it finishes. Defaults to true."),
+      ...confirmArg,
+    },
+    risk: "spend",
+    summary: (args) => `remix image ${String(args.index)} from job ${String(args.job_id)}`,
+    handler: async (args, ctx) => {
+      const submitted = await submitRemix(ctx.client, args.job_id, args.index, args.prompt, {
+        strong: args.strong,
+        speed: args.speed,
+        refresh: args.wait === false,
+      });
+      const jobId = submitted.jobIds[0];
+      if (!jobId || args.wait === false) return { source_job_id: args.job_id, job_ids: submitted.jobIds };
+      return { source_job_id: args.job_id, ...summariseJob(await waitForJob(ctx.client, jobId)) };
     },
   }),
 

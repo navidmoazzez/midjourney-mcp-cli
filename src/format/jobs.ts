@@ -35,6 +35,8 @@ export type Job = {
   batchSize?: number;
   /** Midjourney's own name for the job, e.g. `v8-1_diffusion`. */
   jobType?: string;
+  /** True when the job rendered video rather than stills. */
+  isVideo?: boolean;
   /** Whatever else came back, untouched. */
   raw: Record<string, unknown>;
 };
@@ -56,6 +58,18 @@ export const CDN_ORIGIN = "https://cdn.midjourney.com";
  * these stop resolving, which is why `download_job` reports per-image failures
  * rather than throwing the batch away.
  */
+/**
+ * Where a finished video's files live.
+ *
+ * Videos do not follow the image pattern: they sit under a `/video/` path and
+ * are numbered without the grid prefix. Deriving `.png` names for a video job
+ * yields four URLs that all 404, which is what `download_job` did before.
+ */
+export function videoUrlsFor(jobId: string, count: number): string[] {
+  const n = Number.isFinite(count) && count > 0 ? Math.min(Math.trunc(count), 8) : 1;
+  return Array.from({ length: n }, (_, index) => `${CDN_ORIGIN}/video/${jobId}/${index}.mp4`);
+}
+
 export function imageUrlsFor(jobId: string, batchSize: number): string[] {
   const count = Number.isFinite(batchSize) && batchSize > 0 ? Math.min(Math.trunc(batchSize), 16) : 1;
   return Array.from({ length: count }, (_, index) => `${CDN_ORIGIN}/${jobId}/0_${index}.png`);
@@ -181,11 +195,20 @@ export function normaliseJob(input: unknown): Job | undefined {
   const batchSize = firstNumber(record, ["batch_size", "batchSize"]);
   if (batchSize !== undefined) job.batchSize = batchSize;
 
-  // The history endpoint returns no image URLs. Derive them when the record
-  // says how many were rendered, so a finished job is usable rather than
-  // reported as having produced nothing.
-  if (job.images.length === 0 && batchSize !== undefined && batchSize > 0) {
-    job.images = imageUrlsFor(job.id, batchSize);
+  // A video job is recognisable by its type, and its files are elsewhere.
+  const isVideo = /video|_i2v_/i.test(`${jobType ?? ""} ${record.event_type ?? ""}`);
+  if (isVideo) job.isVideo = true;
+
+  // Neither endpoint returns file URLs. Derive them when the record says how
+  // many were rendered, so a finished job is usable rather than reported as
+  // having produced nothing.
+  if (job.images.length === 0) {
+    if (isVideo) {
+      const segments = Array.isArray(record.video_segments) ? record.video_segments.length : 1;
+      job.images = videoUrlsFor(job.id, Math.max(segments, batchSize ?? 1));
+    } else if (batchSize !== undefined && batchSize > 0) {
+      job.images = imageUrlsFor(job.id, batchSize);
+    }
   }
 
   // A job with images but no recognisable status has finished, whatever the app
@@ -244,6 +267,7 @@ export function summariseJob(job: Job): Record<string, unknown> {
     ...(job.parentId ? { parent_id: job.parentId } : {}),
     ...(job.width && job.height ? { size: `${job.width}x${job.height}` } : {}),
     ...(job.jobType ? { job_type: job.jobType } : {}),
+    ...(job.isVideo ? { is_video: true } : {}),
     image_count: job.images.length,
     ...(job.images.length > 0 ? { images: job.images } : {}),
   };

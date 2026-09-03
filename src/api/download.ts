@@ -49,7 +49,8 @@ export function fileNameFor(url: string, jobId: string, index: number): string {
   // job in a folder, so the job id goes in front. The stem itself is dropped
   // when it is just the grid position again: `<job>-0-0_0.png` says nothing
   // that `<job>-0.png` does not.
-  const redundant = /^\d+_\d+$/.test(stem);
+  // `0_2` for a grid image, `2` for a video segment: both repeat the index.
+  const redundant = /^\d+(_\d+)?$/.test(stem);
   const safeStem = redundant ? "" : stem.replace(/[^a-zA-Z0-9._-]/g, "-").slice(0, 60);
   return `${jobId}-${index}${safeStem ? `-${safeStem}` : ""}${extension}`;
 }

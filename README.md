@@ -7,13 +7,13 @@
 [![YouTube](https://img.shields.io/badge/YouTube-@thenavidm-red?logo=youtube&logoColor=white)](https://youtube.com/@thenavidm?sub_confirmation=1)
 [![X](https://img.shields.io/badge/X-@thenavidm-black?logo=x)](https://x.com/thenavidm)
 
-Midjourney MCP server and CLI for Claude Code and AI agents. 27 tools for generating images, following jobs to completion, downloading the real files, and building moodboards that make a style reusable.
+Midjourney MCP server and CLI for Claude Code and AI agents. 32 tools for generating images, following jobs to completion, downloading the real files, and building moodboards that make a style reusable.
 
 Midjourney publishes no API, so this drives a real Chrome that is signed in as you.
 
 There is no key to paste and no cookie to export. You sign in once, in a window, and the session lives in a browser profile rather than in a config file.
 
-27 tools, on both surfaces. It waits for jobs to finish and hands back the actual files, not a screenshot of them.
+32 tools, on both surfaces. It waits for jobs to finish and hands back the actual files, not a screenshot of them.
 
 Built and maintained by [Navid Moazzez](https://navid.me).
 
@@ -128,6 +128,7 @@ All 27 with their arguments are in [section 6](#6-tools).
 - Make a moodboard for cold Nordic product shots, fill it, then shoot a jar of face cream in that style
 - Generate four logo concepts at low stylize so they stay literal, and save them
 - Vary the second one, strong, and save the results
+- Upscale that one and turn it into a video
 - Take that last image's seed and try it again with chaos 40
 - What is in my Midjourney queue right now?
 - Download everything I generated today into ./renders
@@ -286,7 +287,7 @@ authorises a charge.
 
 An MCP server is expensive and a CLI is free.
 
-The `tools/list` payload for these 27 tools is about **8,900 tokens**, plus the
+The `tools/list` payload for these 32 tools is about **11,062 tokens**, plus the
 server instructions. That is charged on every turn of every conversation, used
 or not, because the descriptions are long and carry the parameter grammar.
 
@@ -310,6 +311,11 @@ So the two are not competing:
 | `submit_imagine` | Submit and return the job id without waiting. Spends |
 | `rerun_job` | Run an existing job again, optionally with new wording or at HD. Spends |
 | `vary_image` | Four variations of one image from a grid, subtle or strong. Spends |
+| `upscale_image` | Upscale one image to full resolution, subtle or creative. Spends |
+| `animate_image` | Turn one image into a video. Spends |
+| `pan_image` | Extend the frame left, right, up or down. Spends |
+| `zoom_out` | Pull the camera back and fill the new space. Spends |
+| `remix_image` | Re-render an image against a new prompt, keeping its composition. Spends |
 | `submit_raw_job` | Send a job type this server does not model yet. Spends |
 
 ### Following work
