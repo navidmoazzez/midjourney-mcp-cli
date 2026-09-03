@@ -11,11 +11,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/navidmoazzez/midjourney-mcp-cli"
+    "url": "https://github.com/thenavidm/midjourney-mcp-cli"
   },
-  "homepage": "https://github.com/navidmoazzez/midjourney-mcp-cli",
-  "documentation": "https://github.com/navidmoazzez/midjourney-mcp-cli#readme",
-  "support": "https://github.com/navidmoazzez/midjourney-mcp-cli/issues",
+  "homepage": "https://github.com/thenavidm/midjourney-mcp-cli",
+  "documentation": "https://github.com/thenavidm/midjourney-mcp-cli#readme",
+  "support": "https://github.com/thenavidm/midjourney-mcp-cli/issues",
   "license": "MIT",
   "keywords": [
     "midjourney",

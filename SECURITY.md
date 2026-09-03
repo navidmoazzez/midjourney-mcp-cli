@@ -3,7 +3,7 @@
 ## Reporting a vulnerability
 
 Report privately through GitHub:
-[open a security advisory](https://github.com/navidmoazzez/midjourney-mcp-cli/security/advisories/new).
+[open a security advisory](https://github.com/thenavidm/midjourney-mcp-cli/security/advisories/new).
 
 Please do not open a public issue for a vulnerability.
 

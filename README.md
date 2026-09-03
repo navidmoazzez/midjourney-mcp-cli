@@ -644,7 +644,7 @@ Remove the entry from your client's config, then delete `~/.midjourney-mcp/chrom
 
 ## Questions
 
-Run into a problem or have a question? [Open an issue](https://github.com/navidmoazzez/midjourney-mcp-cli/issues) and I will help.
+Run into a problem or have a question? [Open an issue](https://github.com/thenavidm/midjourney-mcp-cli/issues) and I will help.
 
 ## About the author 👋
 

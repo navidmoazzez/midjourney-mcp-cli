@@ -68,7 +68,7 @@ HTTP:
   MIDJOURNEY_HTTP_HOST            interface for --http, default 127.0.0.1
   MIDJOURNEY_HTTP_TOKEN           bearer token, required to listen off loopback
 
-https://github.com/navidmoazzez/midjourney-mcp-cli
+https://github.com/thenavidm/midjourney-mcp-cli
 `;
 
 /**
