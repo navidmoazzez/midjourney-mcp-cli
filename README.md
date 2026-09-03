@@ -61,12 +61,11 @@ Every other client is in [section 3](#3-install).
 
 ### Which one
 
-| What you are doing | Use |
+| Where you are | What you can reach |
 |---|---|
-| Inside a conversation with an agent | MCP |
-| On claude.ai or your phone | Neither. The browser is on your machine, so a cloud connector cannot reach it |
-| Piping, scripting, cron, CI | CLI |
-| A one-off question in a terminal | CLI |
+| An agent that can run shell commands, like Claude Code or Cursor | Both. The CLI is the cheaper one: it costs nothing until you type it |
+| claude.ai or a phone | Neither. Your logged-in browser is on this machine, and a cloud connector cannot reach it |
+| A terminal, a script, cron or CI | The CLI only. There is no MCP client in a shell |
 
 They are the same program reading the same tool definitions, so anything one
 can do, the other can.
@@ -296,11 +295,10 @@ the model pays only when it runs something.
 
 So the two are not competing:
 
-| Where the work happens | Surface |
+| Where you are | What you can reach |
 |---|---|
-| Inside a conversation with an agent | MCP |
-| Piping, scripting, cron, CI | CLI |
-| A one-off question in a terminal | CLI |
+| An agent that can run shell commands | Both. The CLI costs nothing until you type it |
+| A terminal, a script, cron or CI | The CLI only |
 
 ## 6. Tools
 
